@@ -72,10 +72,18 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Chat error:", error);
-      const errorMessage = error?.message || "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+      let errorMessage = "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+      
+      const errorStr = JSON.stringify(error);
+      if (errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED")) {
+        errorMessage = "আপনার এপিআই কি-এর লিমিট শেষ হয়ে গেছে। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।";
+      } else if (errorStr.includes("API_KEY_INVALID")) {
+        errorMessage = "আপনার এপিআই কি-টি সঠিক নয়। দয়া করে সঠিক কি ব্যবহার করুন।";
+      }
+      
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "model", text: `Error: ${errorMessage}` };
+        updated[updated.length - 1] = { role: "model", text: errorMessage };
         return updated;
       });
     } finally {
