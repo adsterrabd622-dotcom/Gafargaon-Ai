@@ -35,7 +35,15 @@ export interface Message {
 }
 
 // Initialize once to reduce latency
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const getApiKey = () => {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    console.error("GEMINI_API_KEY is missing! Please set it in your environment variables.");
+  }
+  return key || "";
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export async function chatWithGemini(history: Message[], message: string) {
   const chat = ai.chats.create({
