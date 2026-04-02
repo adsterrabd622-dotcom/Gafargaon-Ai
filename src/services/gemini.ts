@@ -36,11 +36,12 @@ export interface Message {
 
 // Initialize once to reduce latency
 const getApiKey = () => {
-  const key = process.env.GEMINI_API_KEY;
+  // Priority: 1. Environment Variable, 2. Hardcoded Key (for testing)
+  const key = process.env.GEMINI_API_KEY || "AIzaSyBpA-7ij3C7s6dezJroZCV43MpnzcLcxU0";
   if (!key) {
-    console.error("GEMINI_API_KEY is missing! Please set it in your environment variables.");
+    console.error("GEMINI_API_KEY is missing!");
   }
-  return key || "";
+  return key;
 };
 
 const ai = new GoogleGenAI({ apiKey: getApiKey() });
