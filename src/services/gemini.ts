@@ -36,7 +36,7 @@ export interface Message {
 
 // Initialize once to reduce latency
 // Hardcoded key for guaranteed functionality on Vercel
-const API_KEY = "AIzaSyBpA-7ij3C7s6dezJroZCV43MpnzcLcxU0";
+const API_KEY = "AIzaSyDmBxm1XGoU1mKQ7Tr3jdxiabSK9yCZ6RU";
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export async function chatWithGemini(history: Message[], message: string) {
