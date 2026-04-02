@@ -70,12 +70,14 @@ export default function App() {
           return updated;
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
-      setMessages(prev => [
-        ...prev,
-        { role: "model", text: "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।" }
-      ]);
+      const errorMessage = error?.message || "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: "model", text: `Error: ${errorMessage}` };
+        return updated;
+      });
     } finally {
       setIsLoading(false);
     }
