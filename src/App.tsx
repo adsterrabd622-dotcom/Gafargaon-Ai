@@ -388,7 +388,7 @@ export default function App() {
             <div className="flex items-center justify-center gap-4 mt-4">
               <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Gafargaon AI v1.0</span>
               <div className="w-1 h-1 bg-slate-200 rounded-full" />
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Powered by Google</span>
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Developed By SAKIB HOSSAIN</span>
             </div>
           </div>
         </div>
