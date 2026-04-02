@@ -35,16 +35,9 @@ export interface Message {
 }
 
 // Initialize once to reduce latency
-const getApiKey = () => {
-  // Priority: 1. Environment Variable, 2. Hardcoded Key (for testing)
-  const key = process.env.GEMINI_API_KEY || "AIzaSyBpA-7ij3C7s6dezJroZCV43MpnzcLcxU0";
-  if (!key) {
-    console.error("GEMINI_API_KEY is missing!");
-  }
-  return key;
-};
-
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+// Hardcoded key for guaranteed functionality on Vercel
+const API_KEY = "AIzaSyBpA-7ij3C7s6dezJroZCV43MpnzcLcxU0";
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export async function chatWithGemini(history: Message[], message: string) {
   const chat = ai.chats.create({
