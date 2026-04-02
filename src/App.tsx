@@ -196,8 +196,8 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0 bg-white lg:rounded-l-[40px] shadow-2xl overflow-hidden">
         {/* Header */}
-        <header className="h-20 border-b border-slate-100 flex items-center justify-between px-6 lg:px-10 bg-white/80 backdrop-blur-xl sticky top-0 z-30">
-          <div className="flex items-center gap-4">
+        <header className="h-20 border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-white/80 backdrop-blur-xl sticky top-0 z-30">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
@@ -205,8 +205,10 @@ export default function App() {
               <Menu className="w-5 h-5 text-slate-600" />
             </button>
             <div className="flex items-center gap-2 lg:hidden">
-              <Terminal className="w-6 h-6 text-emerald-600" />
-              <span className="font-black text-slate-900">Gafargaon AI</span>
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-md shadow-emerald-100">
+                <Terminal className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-black text-slate-900 tracking-tight">Gafargaon AI</span>
             </div>
             <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
               <Command className="w-4 h-4 text-slate-400" />
@@ -239,16 +241,16 @@ export default function App() {
                   </div>
                 </motion.div>
                 
-                <div className="space-y-4">
-                  <h1 className="text-5xl font-black tracking-tight text-slate-900 lg:text-6xl">
+                <div className="space-y-4 px-4">
+                  <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
                     Gafargaon <span className="text-emerald-600">AI.</span>
                   </h1>
-                  <p className="text-slate-400 max-w-md mx-auto text-lg font-medium">
+                  <p className="text-slate-400 max-w-md mx-auto text-base sm:text-lg font-medium leading-relaxed">
                     গফরগাঁওয়ের ইতিহাস, শিক্ষা, মানচিত্র এবং সকল তথ্য জানতে আমাকে জিজ্ঞাসা করুন।
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl px-4">
                   {[
                     { icon: BookOpen, label: "ইতিহাস", desc: "গফরগাঁওয়ের প্রাচীন ইতিহাস ও ঐতিহ্য", color: "bg-blue-50 text-blue-600 border-blue-100" },
                     { icon: LayoutGrid, label: "পরিসংখ্যান", desc: "আয়তন, জনসংখ্যা ও ভৌগোলিক তথ্য", color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
@@ -261,16 +263,16 @@ export default function App() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setInput(item.desc)}
                       className={cn(
-                        "flex items-start gap-5 p-6 rounded-[28px] border transition-all text-left",
+                        "flex items-start gap-4 sm:gap-5 p-5 sm:p-6 rounded-[28px] border transition-all text-left",
                         item.color
                       )}
                     >
-                      <div className="p-3 rounded-2xl bg-white shadow-sm">
-                        <item.icon className="w-6 h-6" />
+                      <div className="p-2.5 sm:p-3 rounded-2xl bg-white shadow-sm flex-shrink-0">
+                        <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 mb-1">{item.label}</div>
-                        <div className="text-xs opacity-70 font-medium leading-relaxed">{item.desc}</div>
+                        <div className="font-bold text-slate-900 mb-0.5 sm:mb-1 text-sm sm:text-base">{item.label}</div>
+                        <div className="text-[11px] sm:text-xs opacity-70 font-medium leading-relaxed line-clamp-2">{item.desc}</div>
                       </div>
                     </motion.button>
                   ))}
@@ -348,11 +350,11 @@ export default function App() {
         </div>
 
         {/* Input Area */}
-        <div className="p-6 lg:p-10 bg-transparent relative z-10">
+        <div className="p-4 sm:p-6 lg:p-10 bg-transparent relative z-10">
           <div className="max-w-3xl mx-auto">
             <motion.div 
               layout
-              className="glass relative flex items-end gap-3 bg-white/80 border border-white/40 rounded-[32px] p-2 pr-3 focus-within:border-emerald-500/30 focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-emerald-200/20 transition-all duration-500"
+              className="glass relative flex items-end gap-2 sm:gap-3 bg-white/90 border border-white/50 rounded-[28px] sm:rounded-[32px] p-1.5 sm:p-2 pr-2 sm:pr-3 focus-within:border-emerald-500/40 focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-emerald-200/30 transition-all duration-500"
             >
               <textarea
                 ref={textareaRef}
@@ -364,7 +366,7 @@ export default function App() {
                 onKeyDown={handleKeyDown}
                 placeholder="গফরগাঁও সম্পর্কে কিছু জিজ্ঞাসা করুন..."
                 rows={1}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-[15px] font-medium py-4 px-6 resize-none max-h-[200px] placeholder:text-slate-400 text-slate-700"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm sm:text-[15px] font-medium py-3 sm:py-4 px-4 sm:px-6 resize-none max-h-[200px] placeholder:text-slate-400 text-slate-700"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -372,23 +374,23 @@ export default function App() {
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
                 className={cn(
-                  "w-12 h-12 rounded-2xl transition-all flex items-center justify-center flex-shrink-0 shadow-lg mb-1",
+                  "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center flex-shrink-0 shadow-lg mb-1",
                   input.trim() && !isLoading
                     ? "bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700"
                     : "bg-slate-100 text-slate-300 cursor-not-allowed shadow-none"
                 )}
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
               </motion.button>
             </motion.div>
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Gafargaon AI v1.0</span>
-              <div className="w-1 h-1 bg-slate-200 rounded-full" />
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Developed By SAKIB HOSSAIN</span>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 px-4">
+              <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gafargaon AI v1.0</span>
+              <div className="hidden sm:block w-1 h-1 bg-slate-200 rounded-full" />
+              <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Developed By SAKIB HOSSAIN</span>
             </div>
           </div>
         </div>
