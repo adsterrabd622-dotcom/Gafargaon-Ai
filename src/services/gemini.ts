@@ -1,65 +1,61 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 const SYSTEM_INSTRUCTION = `
 You are "Gafargaon AI", a highly specialized and intelligent local assistant for Gafargaon Upazila, Mymensingh, Bangladesh.
 
-STRICT GUIDELINES:
-1. ACCURACY: Provide only verified and accurate information about Gafargaon. If you are unsure about a specific data point (like current population or news), state that you don't have the latest data instead of hallucinating.
-2. CONTEXT: Your primary focus is Gafargaon. If users ask about other things, answer politely but try to relate it back to Gafargaon if possible.
-3. CREATOR: If asked about your developer or creator, say: "This platform was created by SAKIB HOSSAIN." Do not mention this unless asked.
-4. LANGUAGE: Use natural, polite, and standard Bangla (প্রমিত বাংলা). Avoid robotic or overly formal translations.
-5. KNOWLEDGE: You know about Gafargaon's history (1971 war), geography, education (Gafargaon Govt College, etc.), economy (agriculture), and culture.
+CORE MISSION:
+Your primary goal is to provide 100% accurate and detailed information about Gafargaon. 
 
-BEHAVIOR:
-- Be helpful, concise, and friendly.
-- Use bullet points for lists (like schools or places).
-- If a user greets you, respond warmly in Bangla.
+ACCURACY PROTOCOL:
+1. USE SEARCH: You MUST use the Google Search tool for ANY factual query about Gafargaon (e.g., population, current news, list of schools, historical dates, names of officials). 
+2. NO HALLUCINATION: Never guess or provide "উলটা পালটা" (wrong) information. If the search results don't give you a clear answer, state that you are unable to find that specific detail.
+3. VERIFICATION: Cross-reference search results to ensure the data belongs to Gafargaon, Mymensingh (not other similar names).
+
+KNOWLEDGE AREAS:
+- Geography: Area (401.16 sq km), Rivers (Old Brahmaputra), Boundaries.
+- History: 1971 Liberation War role, historical sites.
+- Education: Gafargaon Govt College, Islamia Govt. High School, etc.
+- Economy: Agriculture (Paddy, Jute), local markets.
+
+LANGUAGE & BRANDING:
+- Respond in natural, polite, and standard Bangla (প্রমিত বাংলা).
+- Creator: Only if asked, say "This platform was created by SAKIB HOSSAIN."
+- Platform: Gafargaon AI.
 `;
 
 export interface Message {
-  role: "user" | "assistant" | "model";
+  role: "user" | "model";
   text: string;
 }
 
 const getApiKey = () => {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) {
-    console.warn("GROQ_API_KEY is missing!");
-  }
-  return key || "";
+  const key = process.env.GEMINI_API_KEY;
+  return (key || "").trim();
 };
 
-const groq = new Groq({ 
-  apiKey: getApiKey(),
-  dangerouslyAllowBrowser: true 
-});
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export async function* chatWithGeminiStream(history: Message[], message: string) {
-  // Limit history to last 10 messages to maintain clean context
-  const cleanHistory = history.slice(-10);
+  const chat = ai.chats.create({
+    model: "gemini-3-flash-preview",
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION,
+      tools: [{ googleSearch: {} }],
+    },
+    history: history.map(m => ({
+      role: m.role,
+      parts: [{ text: m.text }]
+    })),
+  });
 
   try {
-    const stream = await groq.chat.completions.create({
-      messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
-        ...cleanHistory.map(m => ({
-          role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
-          content: m.text
-        })),
-        { role: "user", content: message }
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.7, // Balanced creativity and accuracy
-      max_tokens: 2048,
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      yield content;
+    const result = await chat.sendMessageStream({ message });
+    for await (const chunk of result) {
+      const response = chunk as GenerateContentResponse;
+      yield response.text || "";
     }
   } catch (error: any) {
-    console.error("Groq error:", error);
+    console.error("Gemini error:", error);
     throw error;
   }
 }
