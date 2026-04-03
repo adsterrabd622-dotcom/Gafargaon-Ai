@@ -75,12 +75,12 @@ export default function App() {
       let errorMessage = "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
       
       const errorStr = JSON.stringify(error).toLowerCase();
-      if (errorStr.includes("429") || errorStr.includes("quota") || errorStr.includes("exhausted")) {
+      if (errorStr.includes("429") || errorStr.includes("quota") || errorStr.includes("exhausted") || errorStr.includes("rate_limit")) {
         errorMessage = "আপনার এপিআই কি-এর লিমিট শেষ হয়ে গেছে। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।";
-      } else if (errorStr.includes("api_key_invalid") || errorStr.includes("invalid api key")) {
-        errorMessage = "আপনার এপিআই কি-টি সঠিক নয়। দয়া করে Vercel Settings থেকে সঠিক কি সেট করুন।";
-      } else if (!process.env.GEMINI_API_KEY) {
-        errorMessage = "এপিআই কি পাওয়া যায়নি! দয়া করে Vercel-এ GEMINI_API_KEY সেট করুন।";
+      } else if (errorStr.includes("api_key_invalid") || errorStr.includes("invalid api key") || errorStr.includes("authentication")) {
+        errorMessage = "আপনার Groq API Key-টি সঠিক নয়। দয়া করে Vercel Settings থেকে সঠিক কি সেট করুন।";
+      } else if (!process.env.GROQ_API_KEY) {
+        errorMessage = "Groq API Key পাওয়া যায়নি! দয়া করে Vercel-এ GROQ_API_KEY সেট করুন।";
       }
       
       setMessages(prev => {

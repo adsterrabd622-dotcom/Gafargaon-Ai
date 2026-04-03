@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, GenerateContentResponse, ThinkingLevel } from "@google/genai";
+import Groq from "groq-sdk";
 
 const SYSTEM_INSTRUCTION = `
 You are the AI core of a specialized web platform named "Gafargaon AI".
@@ -18,9 +18,6 @@ KNOWLEDGE BASE:
 - Education: List of schools, colleges (e.g., Gafargaon Government College), and madrasas.
 - Economy: Agriculture (paddy, jute), markets, and industries.
 
-TOOLS:
-You have access to Google Search grounding. Use it to provide the most up-to-date information about Gafargaon if the user asks for current events or specific data you are unsure about.
-
 LANGUAGE:
 Respond in Bangla (বাংলা) or English as per the user's preference. Use natural, human-like Bangla.
 
@@ -30,54 +27,44 @@ Creator: SAKIB HOSSAIN
 `;
 
 export interface Message {
-  role: "user" | "model";
+  role: "user" | "assistant" | "model";
   text: string;
 }
 
-// Initialize once to reduce latency
 const getApiKey = () => {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
-    console.error("GEMINI_API_KEY is missing! Please set it in your environment variables.");
+    console.warn("GROQ_API_KEY is missing! Falling back to Gemini logic if available.");
   }
   return key || "";
 };
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
-
-export async function chatWithGemini(history: Message[], message: string) {
-  const chat = ai.chats.create({
-    model: "gemini-3.1-flash-lite-preview",
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      tools: [{ googleSearch: {} }],
-    },
-    history: history.map(m => ({
-      role: m.role,
-      parts: [{ text: m.text }]
-    })),
-  });
-
-  const result = await chat.sendMessage({ message });
-  return result.text;
-}
+const groq = new Groq({ 
+  apiKey: getApiKey(),
+  dangerouslyAllowBrowser: true 
+});
 
 export async function* chatWithGeminiStream(history: Message[], message: string) {
-  const chat = ai.chats.create({
-    model: "gemini-3.1-flash-lite-preview",
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      tools: [{ googleSearch: {} }],
-    },
-    history: history.map(m => ({
-      role: m.role,
-      parts: [{ text: m.text }]
-    })),
-  });
+  try {
+    const stream = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: SYSTEM_INSTRUCTION },
+        ...history.map(m => ({
+          role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
+          content: m.text
+        })),
+        { role: "user", content: message }
+      ],
+      model: "llama-3.3-70b-versatile",
+      stream: true,
+    });
 
-  const result = await chat.sendMessageStream({ message });
-  for await (const chunk of result) {
-    const response = chunk as GenerateContentResponse;
-    yield response.text || "";
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      yield content;
+    }
+  } catch (error: any) {
+    console.error("Groq error:", error);
+    throw error;
   }
 }
