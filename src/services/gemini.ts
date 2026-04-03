@@ -47,11 +47,10 @@ const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export async function chatWithGemini(history: Message[], message: string) {
   const chat = ai.chats.create({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-flash-lite-preview",
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       tools: [{ googleSearch: {} }],
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     },
     history: history.map(m => ({
       role: m.role,
@@ -65,11 +64,10 @@ export async function chatWithGemini(history: Message[], message: string) {
 
 export async function* chatWithGeminiStream(history: Message[], message: string) {
   const chat = ai.chats.create({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-flash-lite-preview",
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       tools: [{ googleSearch: {} }],
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     },
     history: history.map(m => ({
       role: m.role,
