@@ -75,12 +75,12 @@ export default function App() {
       let errorMessage = "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
       
       const errorStr = JSON.stringify(error).toLowerCase();
-      if (errorStr.includes("429") || errorStr.includes("quota") || errorStr.includes("exhausted") || errorStr.includes("rate_limit")) {
+      if (errorStr.includes("429") || errorStr.includes("quota") || errorStr.includes("exhausted") || errorStr.includes("rate_limit") || errorStr.includes("too many requests")) {
         errorMessage = "আপনার এপিআই কি-এর লিমিট শেষ হয়ে গেছে। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।";
-      } else if (errorStr.includes("401") || errorStr.includes("invalid_api_key") || errorStr.includes("api_key_invalid") || errorStr.includes("authentication")) {
-        errorMessage = "আপনার Gemini API Key-টি সঠিক নয়। দয়া করে Vercel Settings থেকে সঠিক কি সেট করুন এবং নিশ্চিত করুন যে কোনো অতিরিক্ত স্পেস নেই।";
-      } else if (!process.env.GEMINI_API_KEY) {
-        errorMessage = "Gemini API Key পাওয়া যায়নি! দয়া করে Vercel-এ GEMINI_API_KEY সেট করুন।";
+      } else if (errorStr.includes("401") || errorStr.includes("invalid_api_key") || errorStr.includes("api_key_invalid") || errorStr.includes("authentication") || errorStr.includes("unauthorized")) {
+        errorMessage = "আপনার Hugging Face Token-টি সঠিক নয়। দয়া করে Vercel Settings থেকে সঠিক টোকেন সেট করুন।";
+      } else if (!process.env.HF_TOKEN && !process.env.GEMINI_API_KEY) {
+        errorMessage = "কোনো এপিআই টোকেন পাওয়া যায়নি! দয়া করে Vercel-এ HF_TOKEN সেট করুন।";
       }
       
       setMessages(prev => {
