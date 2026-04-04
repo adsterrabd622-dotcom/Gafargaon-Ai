@@ -33,7 +33,7 @@ const hf = new HfInference(getApiKey());
 export async function* chatWithGeminiStream(history: Message[], message: string) {
   try {
     const stream = hf.chatCompletionStream({
-      model: "Qwen/Qwen2.5-72B-Instruct",
+      model: "google/gemma-2-27b-it",
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
