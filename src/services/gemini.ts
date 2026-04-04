@@ -1,10 +1,15 @@
-import { HfInference } from "@huggingface/inference";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 const SYSTEM_INSTRUCTION = `
 You are "Gafargaon AI", a highly specialized and intelligent local assistant for Gafargaon Upazila, Mymensingh, Bangladesh.
 
 CORE MISSION:
-Your primary goal is to provide accurate and detailed information about Gafargaon. 
+Your primary goal is to provide 100% accurate and detailed information about Gafargaon. 
+
+ACCURACY PROTOCOL:
+1. USE SEARCH: You MUST use the Google Search tool for ANY factual query about Gafargaon (e.g., population, current news, list of schools, historical dates, names of officials). 
+2. NO HALLUCINATION: Never guess or provide wrong information. If the search results don't give you a clear answer, state that you are unable to find that specific detail.
+3. VERIFICATION: Cross-reference search results to ensure the data belongs to Gafargaon, Mymensingh.
 
 KNOWLEDGE AREAS:
 - Geography: Area (401.16 sq km), Rivers (Old Brahmaputra), Boundaries.
@@ -19,41 +24,38 @@ LANGUAGE & BRANDING:
 `;
 
 export interface Message {
-  role: "user" | "assistant" | "model";
+  role: "user" | "model";
   text: string;
 }
 
 const getApiKey = () => {
-  const key = process.env.HF_TOKEN || process.env.GEMINI_API_KEY || "";
+  const key = process.env.GEMINI_API_KEY || "";
   return key.trim();
 };
 
-const hf = new HfInference(getApiKey());
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export async function* chatWithGeminiStream(history: Message[], message: string) {
-  try {
-    const stream = hf.chatCompletionStream({
-      model: "mistralai/Mistral-7B-Instruct-v0.3", // Very fast and efficient model
-      messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
-        ...history.map(m => ({
-          role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
-          content: m.text
-        })),
-        { role: "user", content: message }
-      ],
-      max_tokens: 2048,
-      temperature: 0.7,
-    });
+  const chat = ai.chats.create({
+    model: "gemini-3-flash-preview", // Fastest model with search support
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION,
+      tools: [{ googleSearch: {} }],
+    },
+    history: history.map(m => ({
+      role: m.role,
+      parts: [{ text: m.text }]
+    })),
+  });
 
-    for await (const chunk of stream) {
-      if (chunk.choices && chunk.choices.length > 0) {
-        const content = chunk.choices[0].delta.content || "";
-        yield content;
-      }
+  try {
+    const result = await chat.sendMessageStream({ message });
+    for await (const chunk of result) {
+      const response = chunk as GenerateContentResponse;
+      yield response.text || "";
     }
   } catch (error: any) {
-    console.error("Hugging Face error:", error);
+    console.error("Gemini error:", error);
     throw error;
   }
 }
