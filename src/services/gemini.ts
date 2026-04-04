@@ -33,7 +33,7 @@ const hf = new HfInference(getApiKey());
 export async function* chatWithGeminiStream(history: Message[], message: string) {
   try {
     const stream = hf.chatCompletionStream({
-      model: "google/gemma-2-27b-it",
+      model: "mistralai/Mistral-7B-Instruct-v0.3", // Very fast and efficient model
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
