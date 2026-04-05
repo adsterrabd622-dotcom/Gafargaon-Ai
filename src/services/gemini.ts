@@ -4,18 +4,13 @@ const SYSTEM_INSTRUCTION = `
 You are "Gafargaon AI", a highly specialized and intelligent local assistant for Gafargaon Upazila, Mymensingh, Bangladesh.
 
 CORE MISSION:
-Your primary goal is to provide accurate and detailed information about Gafargaon. 
+Provide accurate, concise, and direct information about Gafargaon. 
 
-KNOWLEDGE AREAS:
-- Geography: Area (401.16 sq km), Rivers (Old Brahmaputra), Boundaries.
-- History: 1971 Liberation War role, historical sites.
-- Education: Gafargaon Govt College, Islamia Govt. High School, etc.
-- Economy: Agriculture (Paddy, Jute), local markets.
-
-LANGUAGE & BRANDING:
-- Respond in natural, polite, and standard Bangla (প্রমিত বাংলা).
-- Creator: Only if asked, say "This platform was created by SAKIB HOSSAIN."
-- Platform: Gafargaon AI.
+STRICT RULES:
+1. BE CONCISE: Do not talk too much. Answer exactly what is asked.
+2. NO HALLUCINATION: Only provide real and verified information. If you don't know, say you don't know.
+3. LANGUAGE: Always respond in polite and standard Bangla (প্রমিত বাংলা).
+4. BRANDING: Creator: SAKIB HOSSAIN. Platform: Gafargaon AI.
 `;
 
 export interface Message {
@@ -30,7 +25,7 @@ const getApiKey = () => {
 
 const hf = new HfInference(getApiKey());
 
-export async function* chatWithGeminiStream(history: Message[], message: string) {
+export async function* chatWithGeminiStream(history: Message[], message: string, signal?: AbortSignal) {
   try {
     const token = getApiKey();
     if (!token) {
@@ -38,7 +33,7 @@ export async function* chatWithGeminiStream(history: Message[], message: string)
     }
 
     const stream = hf.chatCompletionStream({
-      model: "Qwen/Qwen2.5-72B-Instruct", // More stable and robust model for free tier
+      model: "google/gemma-2-9b-it", // More concise and accurate model
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
@@ -47,21 +42,22 @@ export async function* chatWithGeminiStream(history: Message[], message: string)
         })),
         { role: "user", content: message }
       ],
-      max_tokens: 2048,
-      temperature: 0.7,
+      max_tokens: 1024,
+      temperature: 0.4, // Lower temperature for more factual/concise answers
     });
 
     for await (const chunk of stream) {
+      if (signal?.aborted) break;
       if (chunk.choices && chunk.choices.length > 0) {
         const content = chunk.choices[0].delta.content || "";
         yield content;
       }
     }
   } catch (error: any) {
+    if (error.name === 'AbortError') return;
     console.error("Hugging Face error:", error);
-    // If Qwen fails, try a smaller model as fallback
+    // Fallback logic
     try {
-      console.log("Attempting fallback to Mistral-7B...");
       const fallbackStream = hf.chatCompletionStream({
         model: "mistralai/Mistral-7B-Instruct-v0.3",
         messages: [
@@ -72,18 +68,18 @@ export async function* chatWithGeminiStream(history: Message[], message: string)
           })),
           { role: "user", content: message }
         ],
-        max_tokens: 1024,
+        max_tokens: 512,
       });
 
       for await (const chunk of fallbackStream) {
+        if (signal?.aborted) break;
         if (chunk.choices && chunk.choices.length > 0) {
           const content = chunk.choices[0].delta.content || "";
           yield content;
         }
       }
     } catch (fallbackError: any) {
-      console.error("Fallback error:", fallbackError);
-      throw error; // Throw the original error if fallback also fails
+      throw error;
     }
   }
 }

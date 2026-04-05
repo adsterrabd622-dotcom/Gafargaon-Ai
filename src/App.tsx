@@ -34,6 +34,7 @@ export default function App() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,13 +57,17 @@ export default function App() {
     setMessages(newMessages);
     setIsLoading(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       let assistantText = "";
       setMessages(prev => [...prev, { role: "model", text: "" }]);
       
-      const stream = chatWithGeminiStream(messages, userMessage);
+      const stream = chatWithGeminiStream(newMessages.slice(0, -1), userMessage, controller.signal);
       
       for await (const chunk of stream) {
+        if (controller.signal.aborted) break;
         assistantText += chunk;
         setMessages(prev => {
           const updated = [...prev];
@@ -71,6 +76,7 @@ export default function App() {
         });
       }
     } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error("Chat error:", error);
       let errorMessage = "দুঃখিত, একটি সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
       
@@ -95,6 +101,15 @@ export default function App() {
       });
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -389,17 +404,19 @@ export default function App() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
+                onClick={isLoading ? stopGeneration : handleSend}
+                disabled={!input.trim() && !isLoading}
                 className={cn(
                   "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center flex-shrink-0 shadow-lg mb-1",
-                  input.trim() && !isLoading
-                    ? "bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700"
-                    : "bg-slate-100 text-slate-300 cursor-not-allowed shadow-none"
+                  isLoading 
+                    ? "bg-red-500 text-white shadow-red-200 hover:bg-red-600" 
+                    : input.trim() 
+                      ? "bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700" 
+                      : "bg-slate-100 text-slate-300 cursor-not-allowed shadow-none"
                 )}
               >
                 {isLoading ? (
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-sm" />
                 ) : (
                   <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
