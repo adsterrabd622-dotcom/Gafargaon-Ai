@@ -82,13 +82,13 @@ export default function App() {
       
       const errorStr = JSON.stringify(error).toLowerCase();
       if (errorStr.includes("429") || errorStr.includes("quota") || errorStr.includes("exhausted") || errorStr.includes("rate_limit") || errorStr.includes("too many requests")) {
-        errorMessage = "আপনার Hugging Face API লিমিট শেষ হয়ে গেছে। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।";
+        errorMessage = "আপনার Gemini API লিমিট শেষ হয়ে গেছে। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।";
       } else if (errorStr.includes("401") || errorStr.includes("invalid_api_key") || errorStr.includes("api_key_invalid") || errorStr.includes("authentication") || errorStr.includes("unauthorized")) {
-        errorMessage = "আপনার Hugging Face Token-টি সঠিক নয় অথবা মেয়াদ শেষ হয়ে গেছে। দয়া করে Vercel Settings থেকে VITE_HF_TOKEN সেট করুন।";
+        errorMessage = "আপনার Gemini API Key-টি সঠিক নয় অথবা মেয়াদ শেষ হয়ে গেছে। দয়া করে Vercel Settings থেকে GEMINI_API_KEY সেট করুন।";
       } else if (errorStr.includes("model is overloaded") || errorStr.includes("503") || errorStr.includes("service unavailable")) {
-        errorMessage = "সার্ভার এখন অনেক ব্যস্ত। দয়া করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।";
-      } else if (!import.meta.env.VITE_HF_TOKEN && !process.env.GEMINI_API_KEY) {
-        errorMessage = "কোনো এপিআই টোকেন পাওয়া যায়নি! দয়া করে Vercel-এ VITE_HF_TOKEN সেট করুন।";
+        errorMessage = "গুগল সার্ভার এখন অনেক ব্যস্ত। দয়া করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।";
+      } else if (!process.env.GEMINI_API_KEY) {
+        errorMessage = "কোনো Gemini API Key পাওয়া যায়নি! দয়া করে Vercel-এ GEMINI_API_KEY সেট করুন।";
       } else {
         errorMessage = `দুঃখিত, একটি সমস্যা হয়েছে। এরর: ${error.message || "Unknown Error"}`;
       }

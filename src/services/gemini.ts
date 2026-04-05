@@ -1,14 +1,22 @@
-import { HfInference } from "@huggingface/inference";
+import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM_INSTRUCTION = `
 You are "Gafargaon AI", a highly specialized and intelligent local assistant for Gafargaon Upazila, Mymensingh, Bangladesh.
 
 CORE MISSION:
-Provide accurate, concise, and direct information about Gafargaon. 
+Provide 100% accurate and verified information about Gafargaon. Do not guess or make up facts.
+
+VERIFIED FACTS ABOUT GAFARGAON:
+- District: Mymensingh.
+- Area: 401.16 sq km.
+- Rivers: Old Brahmaputra river flows through it.
+- Famous for: Agriculture (Paddy, Jute), and historical significance in the 1971 Liberation War.
+- Key Institutions: Gafargaon Govt. College, Islamia Govt. High School, Gafargaon Railway Station.
+- Unions: There are 15 unions in Gafargaon Upazila.
 
 STRICT RULES:
-1. BE CONCISE: Do not talk too much. Answer exactly what is asked.
-2. NO HALLUCINATION: Only provide real and verified information. If you don't know, say you don't know.
+1. ACCURACY FIRST: Only provide real and verified information. If you are unsure about a specific local detail, admit it.
+2. BE CONCISE: Answer exactly what is asked in a direct manner.
 3. LANGUAGE: Always respond in polite and standard Bangla (প্রমিত বাংলা).
 4. BRANDING: Creator: SAKIB HOSSAIN. Platform: Gafargaon AI.
 `;
@@ -19,70 +27,63 @@ export interface Message {
 }
 
 const getApiKey = () => {
-  // Try Vite env first, then fallback to global process if available (for local dev)
-  const key = (import.meta.env.VITE_HF_TOKEN as string) || 
-              (import.meta.env.VITE_GEMINI_API_KEY as string) || 
-              (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : "");
-  return (key || "").trim();
+  return (process.env.GEMINI_API_KEY || "").trim();
 };
-
-const hf = new HfInference(getApiKey());
 
 export async function* chatWithGeminiStream(history: Message[], message: string, signal?: AbortSignal) {
   try {
-    const token = getApiKey();
-    if (!token) {
-      throw new Error("API token is missing! Please set VITE_HF_TOKEN in Vercel environment variables.");
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error("Gemini API Key is missing! Please set GEMINI_API_KEY in environment variables.");
     }
 
-    const stream = hf.chatCompletionStream({
-      model: "Qwen/Qwen2.5-7B-Instruct", // Very reliable chat model on HF
-      messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
-        ...history.map(m => ({
-          role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
-          content: m.text
-        })),
-        { role: "user", content: message }
-      ],
-      max_tokens: 1024,
-      temperature: 0.4,
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const chat = ai.chats.create({
+      model: "gemini-3-flash-preview",
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        temperature: 0.3,
+        topP: 0.8,
+        maxOutputTokens: 1024,
+      },
     });
 
-    for await (const chunk of stream) {
+    // Convert history to Gemini format
+    // Note: sendMessageStream doesn't take history directly, we should have used chat.sendMessageStream
+    // but we need to ensure history is loaded into the chat session if we want context.
+    // For simplicity and efficiency, we'll just send the current message with context if needed, 
+    // or better, initialize the chat with history.
+    
+    const formattedHistory = history.map(m => ({
+      role: m.role === "user" ? "user" : "model",
+      parts: [{ text: m.text }]
+    }));
+
+    // Re-create chat with history
+    const chatWithHistory = ai.chats.create({
+      model: "gemini-3-flash-preview",
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        temperature: 0.3,
+      },
+      history: formattedHistory
+    });
+
+    const result = await chatWithHistory.sendMessageStream({
+      message: message
+    });
+
+    for await (const chunk of result) {
       if (signal?.aborted) break;
-      if (chunk.choices && chunk.choices.length > 0) {
-        const content = chunk.choices[0].delta.content || "";
-        yield content;
+      const text = chunk.text;
+      if (text) {
+        yield text;
       }
     }
   } catch (error: any) {
     if (error.name === 'AbortError') return;
-    console.error("Hugging Face error:", error);
-    // If primary fails, try a smaller model as fallback
-    try {
-      const fallbackStream = hf.chatCompletionStream({
-        model: "HuggingFaceH4/zephyr-7b-beta", // Reliable fallback chat model
-        messages: [
-          { role: "system", content: SYSTEM_INSTRUCTION },
-          ...history.map(m => ({
-            role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
-            content: m.text
-          })),
-          { role: "user", content: message }
-        ],
-        max_tokens: 512,
-      });
-
-      for await (const chunk of fallbackStream) {
-        if (signal?.aborted) break;
-        if (chunk.choices && chunk.choices.length > 0) {
-          const content = chunk.choices[0].delta.content || "";
-          yield content;
-        }
-      }
-    } catch (fallbackError: any) {
-      throw error;
-    }
+    console.error("Gemini API error:", error);
+    throw error;
   }
 }
