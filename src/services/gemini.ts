@@ -32,8 +32,13 @@ const hf = new HfInference(getApiKey());
 
 export async function* chatWithGeminiStream(history: Message[], message: string) {
   try {
+    const token = getApiKey();
+    if (!token) {
+      throw new Error("API token is missing. Please set HF_TOKEN in environment variables.");
+    }
+
     const stream = hf.chatCompletionStream({
-      model: "google/gemma-2-27b-it", // Google's open-source model on Hugging Face
+      model: "Qwen/Qwen2.5-72B-Instruct", // More stable and robust model for free tier
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
@@ -54,6 +59,31 @@ export async function* chatWithGeminiStream(history: Message[], message: string)
     }
   } catch (error: any) {
     console.error("Hugging Face error:", error);
-    throw error;
+    // If Qwen fails, try a smaller model as fallback
+    try {
+      console.log("Attempting fallback to Mistral-7B...");
+      const fallbackStream = hf.chatCompletionStream({
+        model: "mistralai/Mistral-7B-Instruct-v0.3",
+        messages: [
+          { role: "system", content: SYSTEM_INSTRUCTION },
+          ...history.map(m => ({
+            role: (m.role === "model" ? "assistant" : "user") as "assistant" | "user",
+            content: m.text
+          })),
+          { role: "user", content: message }
+        ],
+        max_tokens: 1024,
+      });
+
+      for await (const chunk of fallbackStream) {
+        if (chunk.choices && chunk.choices.length > 0) {
+          const content = chunk.choices[0].delta.content || "";
+          yield content;
+        }
+      }
+    } catch (fallbackError: any) {
+      console.error("Fallback error:", fallbackError);
+      throw error; // Throw the original error if fallback also fails
+    }
   }
 }
