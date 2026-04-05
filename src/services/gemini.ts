@@ -33,7 +33,7 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
     }
 
     const stream = hf.chatCompletionStream({
-      model: "mistralai/Mistral-7B-Instruct-v0.3", // Very reliable and fast on free tier
+      model: "mistralai/Mistral-7B-Instruct-v0.2", // Verified chat model on HF Inference API
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
@@ -56,10 +56,10 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
   } catch (error: any) {
     if (error.name === 'AbortError') return;
     console.error("Hugging Face error:", error);
-    // Fallback logic
+    // If primary fails, try a smaller model as fallback
     try {
       const fallbackStream = hf.chatCompletionStream({
-        model: "mistralai/Mistral-7B-Instruct-v0.3",
+        model: "HuggingFaceH4/zephyr-7b-beta", // Reliable fallback chat model
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
           ...history.map(m => ({
