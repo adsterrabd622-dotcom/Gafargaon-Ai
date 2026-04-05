@@ -19,8 +19,11 @@ export interface Message {
 }
 
 const getApiKey = () => {
-  const key = (import.meta.env.VITE_HF_TOKEN as string) || (import.meta.env.VITE_GEMINI_API_KEY as string) || (process.env.GEMINI_API_KEY as string) || "";
-  return key.trim();
+  // Try Vite env first, then fallback to global process if available (for local dev)
+  const key = (import.meta.env.VITE_HF_TOKEN as string) || 
+              (import.meta.env.VITE_GEMINI_API_KEY as string) || 
+              (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : "");
+  return (key || "").trim();
 };
 
 const hf = new HfInference(getApiKey());
@@ -29,11 +32,11 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
   try {
     const token = getApiKey();
     if (!token) {
-      throw new Error("API token is missing. Please set VITE_HF_TOKEN in environment variables.");
+      throw new Error("API token is missing! Please set VITE_HF_TOKEN in Vercel environment variables.");
     }
 
     const stream = hf.chatCompletionStream({
-      model: "mistralai/Mistral-7B-Instruct-v0.2", // Verified chat model on HF Inference API
+      model: "Qwen/Qwen2.5-7B-Instruct", // Very reliable chat model on HF
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
