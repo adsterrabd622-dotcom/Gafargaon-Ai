@@ -361,7 +361,7 @@ export default function App() {
                 </motion.div>
               ))
             )}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            {isLoading && (messages.length === 0 || messages[messages.length - 1]?.role === "user" || (messages[messages.length - 1]?.role === "model" && !messages[messages.length - 1]?.text)) && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -372,10 +372,13 @@ export default function App() {
                 </div>
                 <div className="flex-1 space-y-3">
                   <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300">Gafargaon AI</div>
-                  <div className="message-bubble-model px-6 py-4 flex items-center gap-1.5">
-                    <div className="typing-dot" style={{ animationDelay: "0s" }} />
-                    <div className="typing-dot" style={{ animationDelay: "0.2s" }} />
-                    <div className="typing-dot" style={{ animationDelay: "0.4s" }} />
+                  <div className="message-bubble-model px-6 py-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="typing-dot" style={{ animationDelay: "0s" }} />
+                      <div className="typing-dot" style={{ animationDelay: "0.2s" }} />
+                      <div className="typing-dot" style={{ animationDelay: "0.4s" }} />
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-bold animate-pulse">তথ্য খোঁজা হচ্ছে...</span>
                   </div>
                 </div>
               </motion.div>

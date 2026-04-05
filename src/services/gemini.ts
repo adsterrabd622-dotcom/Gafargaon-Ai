@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 const SYSTEM_INSTRUCTION = `
 You are "Gafargaon AI", a highly specialized and intelligent local assistant for Gafargaon Upazila, Mymensingh, Bangladesh.
@@ -39,38 +39,26 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
 
     const ai = new GoogleGenAI({ apiKey });
     
-    const chat = ai.chats.create({
-      model: "gemini-3-flash-preview",
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.3,
-        topP: 0.8,
-        maxOutputTokens: 1024,
-      },
-    });
-
     // Convert history to Gemini format
-    // Note: sendMessageStream doesn't take history directly, we should have used chat.sendMessageStream
-    // but we need to ensure history is loaded into the chat session if we want context.
-    // For simplicity and efficiency, we'll just send the current message with context if needed, 
-    // or better, initialize the chat with history.
-    
     const formattedHistory = history.map(m => ({
       role: m.role === "user" ? "user" : "model",
       parts: [{ text: m.text }]
     }));
 
-    // Re-create chat with history
-    const chatWithHistory = ai.chats.create({
+    // Create chat with history and optimized config
+    const chat = ai.chats.create({
       model: "gemini-3-flash-preview",
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.3,
+        temperature: 0.2, // Lower temperature for faster/more direct answers
+        topP: 0.8,
+        maxOutputTokens: 1024,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } // Minimize latency
       },
       history: formattedHistory
     });
 
-    const result = await chatWithHistory.sendMessageStream({
+    const result = await chat.sendMessageStream({
       message: message
     });
 
