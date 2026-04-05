@@ -19,7 +19,7 @@ export interface Message {
 }
 
 const getApiKey = () => {
-  const key = process.env.HF_TOKEN || process.env.GEMINI_API_KEY || "";
+  const key = (import.meta.env.VITE_HF_TOKEN as string) || (import.meta.env.VITE_GEMINI_API_KEY as string) || (process.env.GEMINI_API_KEY as string) || "";
   return key.trim();
 };
 
@@ -29,11 +29,11 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
   try {
     const token = getApiKey();
     if (!token) {
-      throw new Error("API token is missing. Please set HF_TOKEN in environment variables.");
+      throw new Error("API token is missing. Please set VITE_HF_TOKEN in environment variables.");
     }
 
     const stream = hf.chatCompletionStream({
-      model: "google/gemma-2-9b-it", // More concise and accurate model
+      model: "mistralai/Mistral-7B-Instruct-v0.3", // Very reliable and fast on free tier
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         ...history.map(m => ({
@@ -43,7 +43,7 @@ export async function* chatWithGeminiStream(history: Message[], message: string,
         { role: "user", content: message }
       ],
       max_tokens: 1024,
-      temperature: 0.4, // Lower temperature for more factual/concise answers
+      temperature: 0.4,
     });
 
     for await (const chunk of stream) {
